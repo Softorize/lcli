@@ -1,0 +1,25 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - gosec
+    - prealloc
+    - revive
+    - unconvert
+    - unparam
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  goimports:
+    local-prefixes: github.com/toto/lcli
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters: [gocyclo, unparam]
