@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/toto/lcli/internal/model"
+	"github.com/Softorize/lcli/internal/model"
 )
 
 // OrgService provides access to LinkedIn organization endpoints.

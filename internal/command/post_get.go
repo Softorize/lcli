@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/toto/lcli/internal/output"
+	"github.com/Softorize/lcli/internal/output"
 )
 
 // runPostGet handles the post get subcommand.

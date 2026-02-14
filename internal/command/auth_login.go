@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/toto/lcli/internal/auth"
-	"github.com/toto/lcli/internal/config"
+	"github.com/Softorize/lcli/internal/auth"
+	"github.com/Softorize/lcli/internal/config"
 )
 
 // runAuthLogin handles the auth login subcommand.

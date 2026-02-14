@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/toto/lcli/internal/output"
+	"github.com/Softorize/lcli/internal/output"
 )
 
 // runAnalytics dispatches to analytics subcommands: post, views.

@@ -17,7 +17,7 @@ linters-settings:
   gocyclo:
     min-complexity: 15
   goimports:
-    local-prefixes: github.com/toto/lcli
+    local-prefixes: github.com/Softorize/lcli
 
 issues:
   exclude-rules:

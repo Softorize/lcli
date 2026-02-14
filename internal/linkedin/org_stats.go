@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/toto/lcli/internal/model"
+	"github.com/Softorize/lcli/internal/model"
 )
 
 // FollowerStats retrieves follower statistics for an organization.

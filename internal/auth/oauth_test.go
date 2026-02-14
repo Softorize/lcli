@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/toto/lcli/internal/config"
+	"github.com/Softorize/lcli/internal/config"
 )
 
 func TestAuthorizationURL(t *testing.T) {

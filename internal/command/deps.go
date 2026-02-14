@@ -5,9 +5,9 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/toto/lcli/internal/config"
-	"github.com/toto/lcli/internal/linkedin"
-	"github.com/toto/lcli/internal/output"
+	"github.com/Softorize/lcli/internal/config"
+	"github.com/Softorize/lcli/internal/linkedin"
+	"github.com/Softorize/lcli/internal/output"
 )
 
 // Deps holds injected dependencies for all commands.

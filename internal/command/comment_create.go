@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/toto/lcli/internal/model"
+	"github.com/Softorize/lcli/internal/model"
 )
 
 // runCommentCreate handles the comment create subcommand.

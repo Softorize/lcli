@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/toto/lcli/internal/model"
+	"github.com/Softorize/lcli/internal/model"
 )
 
 // ProfileService provides access to LinkedIn profile endpoints.

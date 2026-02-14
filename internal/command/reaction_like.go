@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/toto/lcli/internal/model"
+	"github.com/Softorize/lcli/internal/model"
 )
 
 // validReactionTypes lists the accepted reaction type values.

@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/toto/lcli/internal/config"
+	"github.com/Softorize/lcli/internal/config"
 )
 
 // runConfig dispatches to config subcommands: setup.

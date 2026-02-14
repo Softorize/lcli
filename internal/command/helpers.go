@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/toto/lcli/internal/output"
+	"github.com/Softorize/lcli/internal/output"
 )
 
 // errNotAuthenticated is returned when a command requires authentication

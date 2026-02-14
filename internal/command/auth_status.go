@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/toto/lcli/internal/config"
+	"github.com/Softorize/lcli/internal/config"
 )
 
 // runAuthStatus handles the auth status subcommand.

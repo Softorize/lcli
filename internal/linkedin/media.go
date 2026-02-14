@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/toto/lcli/internal/model"
+	"github.com/Softorize/lcli/internal/model"
 )
 
 // MediaService provides access to LinkedIn media upload endpoints.

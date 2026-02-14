@@ -1,4 +1,4 @@
-module github.com/toto/lcli
+module github.com/Softorize/lcli
 
 go 1.25
 

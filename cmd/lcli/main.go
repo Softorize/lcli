@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/toto/lcli/internal/client"
-	"github.com/toto/lcli/internal/command"
-	"github.com/toto/lcli/internal/config"
-	"github.com/toto/lcli/internal/linkedin"
-	"github.com/toto/lcli/internal/output"
+	"github.com/Softorize/lcli/internal/client"
+	"github.com/Softorize/lcli/internal/command"
+	"github.com/Softorize/lcli/internal/config"
+	"github.com/Softorize/lcli/internal/linkedin"
+	"github.com/Softorize/lcli/internal/output"
 )
 
 func main() {

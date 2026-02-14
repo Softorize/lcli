@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/toto/lcli/internal/config"
+	"github.com/Softorize/lcli/internal/config"
 )
 
 // runAuthLogout handles the auth logout subcommand.

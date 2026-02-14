@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/toto/lcli/internal/model"
+	"github.com/Softorize/lcli/internal/model"
 )
 
 // Doer executes HTTP requests against the LinkedIn API.

@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/toto/lcli/internal/output"
+	"github.com/Softorize/lcli/internal/output"
 )
 
 // runReactionList handles the reaction list subcommand.

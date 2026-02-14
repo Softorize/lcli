@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/toto/lcli/internal/model"
-	"github.com/toto/lcli/internal/output"
+	"github.com/Softorize/lcli/internal/model"
+	"github.com/Softorize/lcli/internal/output"
 )
 
 // runOrgInfo handles the org info subcommand.

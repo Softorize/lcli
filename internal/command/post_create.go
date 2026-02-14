@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/toto/lcli/internal/model"
+	"github.com/Softorize/lcli/internal/model"
 )
 
 // runPostCreate handles the post create subcommand.

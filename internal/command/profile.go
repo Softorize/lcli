@@ -5,8 +5,8 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/toto/lcli/internal/model"
-	"github.com/toto/lcli/internal/output"
+	"github.com/Softorize/lcli/internal/model"
+	"github.com/Softorize/lcli/internal/output"
 )
 
 // runProfile dispatches to profile subcommands: me, view.

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/toto/lcli/internal/model"
+	"github.com/Softorize/lcli/internal/model"
 )
 
 // ReactionService provides access to LinkedIn reaction endpoints.
