@@ -23,11 +23,12 @@ func NewPostService(d Doer) *PostService {
 
 // postBody is the request payload for creating a post via the REST API.
 type postBody struct {
-	Author       string          `json:"author"`
-	Commentary   string          `json:"commentary"`
-	Visibility   string          `json:"visibility"`
-	Distribution postDistribution `json:"distribution"`
-	Content      *postContent    `json:"content,omitempty"`
+	Author         string           `json:"author"`
+	Commentary     string           `json:"commentary"`
+	Visibility     string           `json:"visibility"`
+	Distribution   postDistribution `json:"distribution"`
+	LifecycleState string           `json:"lifecycleState"`
+	Content        *postContent     `json:"content,omitempty"`
 }
 
 // postDistribution controls the feed distribution of a post.
@@ -42,7 +43,8 @@ type postContent struct {
 
 // postMedia references an uploaded media asset.
 type postMedia struct {
-	ID string `json:"id"`
+	ID    string `json:"id"`
+	Title string `json:"title,omitempty"`
 }
 
 // postResponse is the raw API response for a single post.
@@ -87,18 +89,24 @@ func (r *postResponse) toPost() *model.Post {
 
 // Create publishes a new post on LinkedIn.
 func (s *PostService) Create(ctx context.Context, req *model.CreatePostRequest) (*model.Post, error) {
+	author := req.AuthorURN
+	if author == "" {
+		author = "me"
+	}
+
 	body := postBody{
-		Author:     "me",
+		Author:     author,
 		Commentary: req.Text,
 		Visibility: req.Visibility,
 		Distribution: postDistribution{
 			FeedDistribution: "MAIN_FEED",
 		},
+		LifecycleState: "PUBLISHED",
 	}
 
 	if req.MediaURN != "" {
 		body.Content = &postContent{
-			Media: &postMedia{ID: req.MediaURN},
+			Media: &postMedia{ID: req.MediaURN, Title: req.MediaTitle},
 		}
 	}
 
@@ -109,6 +117,24 @@ func (s *PostService) Create(ctx context.Context, req *model.CreatePostRequest) 
 
 	if err := checkError(resp); err != nil {
 		return nil, fmt.Errorf("create post: %w", err)
+	}
+
+	// LinkedIn returns 201 Created with the post ID in x-restli-id header
+	// and may return an empty body.
+	postID := resp.Header.Get("X-Restli-Id")
+	if postID == "" {
+		postID = resp.Header.Get("x-restli-id")
+	}
+
+	if postID != "" {
+		drainBody(resp)
+		return &model.Post{
+			ID:             postID,
+			Author:         author,
+			Text:           req.Text,
+			Visibility:     req.Visibility,
+			LifecycleState: "PUBLISHED",
+		}, nil
 	}
 
 	var raw postResponse

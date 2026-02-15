@@ -16,6 +16,8 @@ func runPostCreate(args []string, deps *Deps) error {
 	visibility := fs.String("visibility", "PUBLIC", "Visibility: PUBLIC or CONNECTIONS")
 	image := fs.String("image", "", "Path to image file to attach")
 	video := fs.String("video", "", "Path to video file to attach")
+	document := fs.String("document", "", "Path to PDF document for carousel post")
+	title := fs.String("title", "", "Title for document/carousel post")
 	fs.SetOutput(deps.Stderr)
 
 	if err := fs.Parse(args); err != nil {
@@ -38,7 +40,14 @@ func runPostCreate(args []string, deps *Deps) error {
 		Visibility: *visibility,
 	}
 
-	if err := attachMedia(ctx, deps, req, *image, *video); err != nil {
+	// Resolve the full person URN for the author (required by API v202601+).
+	if err := requireAuth(deps.Profile); err == nil {
+		if profile, err := deps.Profile.Me(ctx); err == nil {
+			req.AuthorURN = "urn:li:person:" + profile.ID
+		}
+	}
+
+	if err := attachMedia(ctx, deps, req, *image, *video, *document, *title); err != nil {
 		return err
 	}
 
@@ -51,9 +60,9 @@ func runPostCreate(args []string, deps *Deps) error {
 	return nil
 }
 
-// attachMedia uploads the given image or video and sets the MediaURN on req.
-func attachMedia(ctx context.Context, deps *Deps, req *model.CreatePostRequest, imagePath, videoPath string) error {
-	if imagePath == "" && videoPath == "" {
+// attachMedia uploads the given image, video, or document and sets the MediaURN on req.
+func attachMedia(ctx context.Context, deps *Deps, req *model.CreatePostRequest, imagePath, videoPath, documentPath, documentTitle string) error {
+	if imagePath == "" && videoPath == "" && documentPath == "" {
 		return nil
 	}
 	if err := requireAuth(deps.Media); err != nil {
@@ -66,8 +75,26 @@ func attachMedia(ctx context.Context, deps *Deps, req *model.CreatePostRequest, 
 		filePath = videoPath
 		mediaType = "VIDEO"
 	}
+	if documentPath != "" {
+		filePath = documentPath
+		mediaType = "DOCUMENT"
+	}
 
-	upload, err := deps.Media.InitUpload(ctx, "me", mediaType)
+	// The document API requires the full person URN (urn:li:person:ID),
+	// while images and videos accept "me".
+	owner := "me"
+	if mediaType == "DOCUMENT" {
+		if err := requireAuth(deps.Profile); err != nil {
+			return fmt.Errorf("post create: profile required for document upload: %w", err)
+		}
+		profile, err := deps.Profile.Me(ctx)
+		if err != nil {
+			return fmt.Errorf("post create: resolve owner: %w", err)
+		}
+		owner = "urn:li:person:" + profile.ID
+	}
+
+	upload, err := deps.Media.InitUpload(ctx, owner, mediaType)
 	if err != nil {
 		return fmt.Errorf("post create: init upload: %w", err)
 	}
@@ -83,6 +110,9 @@ func attachMedia(ctx context.Context, deps *Deps, req *model.CreatePostRequest, 
 	}
 
 	req.MediaURN = upload.MediaURN
+	if documentTitle != "" {
+		req.MediaTitle = documentTitle
+	}
 	return nil
 }
 
