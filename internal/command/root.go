@@ -44,6 +44,8 @@ func Run(args []string, deps *Deps) error {
 		return runOrg(sub, deps)
 	case "analytics":
 		return runAnalytics(sub, deps)
+	case "completion":
+		return runCompletion(sub, deps)
 	case "version":
 		return runVersion(deps)
 	default:
@@ -68,6 +70,7 @@ Commands:
   media       Upload images and videos
   org         Manage organization pages
   analytics   View post and profile analytics
+  completion  Generate shell completion scripts
   version     Print version information
 
 Use "lcli <command> -help" for more information about a command.
