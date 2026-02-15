@@ -1,39 +1,9 @@
 package linkedin
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
 	"testing"
 )
-
-// mockDoer implements Doer for testing. It returns responses in order.
-type mockDoer struct {
-	responses []mockResponse
-	callIdx   int
-}
-
-type mockResponse struct {
-	status int
-	body   any
-}
-
-func (m *mockDoer) Do(_ context.Context, _, _ string, _ any) (*http.Response, error) {
-	if m.callIdx >= len(m.responses) {
-		return nil, fmt.Errorf("no more mock responses")
-	}
-	r := m.responses[m.callIdx]
-	m.callIdx++
-	data, _ := json.Marshal(r.body)
-	return &http.Response{
-		StatusCode: r.status,
-		Body:       io.NopCloser(bytes.NewReader(data)),
-		Header:     http.Header{},
-	}, nil
-}
 
 func TestMeSuccess(t *testing.T) {
 	profileResp := map[string]any{
@@ -127,5 +97,41 @@ func TestMeEmailFetchFails(t *testing.T) {
 	}
 	if profile.Email != "" {
 		t.Errorf("Email = %q, want empty when fetch fails", profile.Email)
+	}
+}
+
+func TestGetByIDSuccess(t *testing.T) {
+	doer := &mockDoer{responses: []mockResponse{
+		{status: 200, body: map[string]any{
+			"id":                 "person123",
+			"localizedFirstName": "Alice",
+			"localizedLastName":  "Jones",
+			"localizedHeadline":  "Designer",
+			"vanityName":         "alicejones",
+		}},
+	}}
+
+	svc := NewProfileService(doer)
+	profile, err := svc.GetByID(context.Background(), "person123")
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+	if profile.ID != "person123" {
+		t.Errorf("ID = %q", profile.ID)
+	}
+	if profile.FirstName != "Alice" {
+		t.Errorf("FirstName = %q", profile.FirstName)
+	}
+}
+
+func TestGetByIDError(t *testing.T) {
+	doer := &mockDoer{responses: []mockResponse{
+		{status: 404, body: map[string]any{"status": 404, "message": "not found"}},
+	}}
+
+	svc := NewProfileService(doer)
+	_, err := svc.GetByID(context.Background(), "nonexistent")
+	if err == nil {
+		t.Fatal("expected error")
 	}
 }

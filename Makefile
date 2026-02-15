@@ -5,7 +5,7 @@ VERSION     ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo 
 COMMIT      := $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
 DATE        := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 GO          := go
-LDFLAGS     := -ldflags "-s -w -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(DATE)"
+LDFLAGS     := -ldflags "-s -w -X github.com/Softorize/lcli/internal/command.BuildVersion=$(VERSION) -X github.com/Softorize/lcli/internal/command.BuildCommit=$(COMMIT) -X github.com/Softorize/lcli/internal/command.BuildDate=$(DATE)"
 
 .PHONY: build run test test-cover lint vet fmt check clean install help
 

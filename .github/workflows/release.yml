@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          EXT=""
+          if [ "$GOOS" = "windows" ]; then EXT=".exe"; fi
+          go build \
+            -ldflags "-s -w \
+              -X github.com/Softorize/lcli/internal/command.BuildVersion=${GITHUB_REF_NAME} \
+              -X github.com/Softorize/lcli/internal/command.BuildCommit=$(git rev-parse --short HEAD) \
+              -X github.com/Softorize/lcli/internal/command.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            -o lcli-${GOOS}-${GOARCH}${EXT} ./cmd/lcli
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: lcli-*
