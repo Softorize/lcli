@@ -2,29 +2,38 @@ package linkedin
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
 func TestMeSuccess(t *testing.T) {
-	profileResp := map[string]any{
-		"id":                 "abc123",
-		"localizedFirstName": "John",
-		"localizedLastName":  "Doe",
-		"localizedHeadline":  "Engineer",
-		"vanityName":         "johndoe",
-	}
-	emailResp := map[string]any{
-		"elements": []map[string]any{
-			{"handle~": map[string]any{"emailAddress": "john@example.com"}},
-		},
-	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer test-token" {
+			t.Errorf("unexpected auth header: %s", r.Header.Get("Authorization"))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"sub":            "abc123",
+			"given_name":     "John",
+			"family_name":    "Doe",
+			"name":           "John Doe",
+			"picture":        "https://example.com/photo.jpg",
+			"email":          "john@example.com",
+			"email_verified": true,
+		})
+	}))
+	defer srv.Close()
 
-	doer := &mockDoer{responses: []mockResponse{
-		{status: 200, body: profileResp},
-		{status: 200, body: emailResp},
-	}}
+	// Override the userinfo URL for testing.
+	origURL := userinfoURL
+	defer func() { userinfoURLOverride = "" }()
+	userinfoURLOverride = srv.URL
+	_ = origURL
 
-	svc := NewProfileService(doer)
+	doer := &mockDoer{}
+	svc := NewProfileService(doer, "test-token")
 	profile, err := svc.Me(context.Background())
 	if err != nil {
 		t.Fatalf("Me: %v", err)
@@ -38,8 +47,6 @@ func TestMeSuccess(t *testing.T) {
 		{"ID", profile.ID, "abc123"},
 		{"FirstName", profile.FirstName, "John"},
 		{"LastName", profile.LastName, "Doe"},
-		{"Headline", profile.Headline, "Engineer"},
-		{"Vanity", profile.Vanity, "johndoe"},
 		{"Email", profile.Email, "john@example.com"},
 	}
 	for _, tt := range tests {
@@ -52,51 +59,20 @@ func TestMeSuccess(t *testing.T) {
 }
 
 func TestMeNon200(t *testing.T) {
-	tests := []struct {
-		name   string
-		status int
-	}{
-		{"401 unauthorized", 401},
-		{"403 forbidden", 403},
-		{"500 server error", 500},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			errBody := map[string]any{
-				"status":  tt.status,
-				"message": "error",
-			}
-			doer := &mockDoer{responses: []mockResponse{
-				{status: tt.status, body: errBody},
-			}}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(403)
+		w.Write([]byte(`{"error": "forbidden"}`))
+	}))
+	defer srv.Close()
 
-			svc := NewProfileService(doer)
-			_, err := svc.Me(context.Background())
-			if err == nil {
-				t.Fatal("expected error, got nil")
-			}
-		})
-	}
-}
+	defer func() { userinfoURLOverride = "" }()
+	userinfoURLOverride = srv.URL
 
-func TestMeEmailFetchFails(t *testing.T) {
-	profileResp := map[string]any{
-		"id":                 "xyz",
-		"localizedFirstName": "Jane",
-		"localizedLastName":  "Smith",
-	}
-	doer := &mockDoer{responses: []mockResponse{
-		{status: 200, body: profileResp},
-		{status: 403, body: map[string]any{"status": 403, "message": "no access"}},
-	}}
-
-	svc := NewProfileService(doer)
-	profile, err := svc.Me(context.Background())
-	if err != nil {
-		t.Fatalf("Me should succeed even if email fails: %v", err)
-	}
-	if profile.Email != "" {
-		t.Errorf("Email = %q, want empty when fetch fails", profile.Email)
+	doer := &mockDoer{}
+	svc := NewProfileService(doer, "bad-token")
+	_, err := svc.Me(context.Background())
+	if err == nil {
+		t.Fatal("expected error, got nil")
 	}
 }
 
@@ -111,7 +87,7 @@ func TestGetByIDSuccess(t *testing.T) {
 		}},
 	}}
 
-	svc := NewProfileService(doer)
+	svc := NewProfileService(doer, "")
 	profile, err := svc.GetByID(context.Background(), "person123")
 	if err != nil {
 		t.Fatalf("GetByID: %v", err)
@@ -129,7 +105,7 @@ func TestGetByIDError(t *testing.T) {
 		{status: 404, body: map[string]any{"status": 404, "message": "not found"}},
 	}}
 
-	svc := NewProfileService(doer)
+	svc := NewProfileService(doer, "")
 	_, err := svc.GetByID(context.Background(), "nonexistent")
 	if err == nil {
 		t.Fatal("expected error")

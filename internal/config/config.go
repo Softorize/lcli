@@ -16,7 +16,7 @@ const (
 	configFileName  = "config.json"
 	tokensFileName  = "tokens.json"
 	defaultRedirect = "http://localhost:8484/callback"
-	defaultVersion  = "202501"
+	defaultVersion  = "202601"
 	expiryBuffer    = 5 * time.Minute
 )
 
