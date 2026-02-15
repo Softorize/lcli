@@ -32,7 +32,7 @@ func printMediaUsage(deps *Deps) {
 	fmt.Fprint(deps.Stdout, `Usage: lcli media <subcommand> [flags]
 
 Subcommands:
-  upload    Upload an image or video file
+  upload    Upload an image, video, or document file
 
 Use "lcli media <subcommand> -help" for more information.
 `)
@@ -41,7 +41,7 @@ Use "lcli media <subcommand> -help" for more information.
 // runMediaUpload handles the media upload subcommand.
 func runMediaUpload(args []string, deps *Deps) error {
 	fs := flag.NewFlagSet("media upload", flag.ContinueOnError)
-	mediaType := fs.String("type", "", "Media type: image or video (auto-detected if not set)")
+	mediaType := fs.String("type", "", "Media type: image, video, or document (auto-detected if not set)")
 	owner := fs.String("owner", "me", "Owner URN (defaults to 'me')")
 	fs.SetOutput(deps.Stderr)
 
@@ -59,7 +59,7 @@ func runMediaUpload(args []string, deps *Deps) error {
 		detectedType = detectMediaType(filePath)
 	}
 
-	if detectedType != "image" && detectedType != "video" {
+	if detectedType != "image" && detectedType != "video" && detectedType != "document" {
 		return fmt.Errorf("media upload: unable to detect type for %q, use --type", filePath)
 	}
 
@@ -98,6 +98,8 @@ func detectMediaType(path string) string {
 		return "image"
 	case ".mp4", ".mov", ".avi", ".wmv", ".webm":
 		return "video"
+	case ".pdf", ".pptx", ".ppt", ".doc", ".docx":
+		return "document"
 	default:
 		return ""
 	}

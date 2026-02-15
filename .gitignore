@@ -28,3 +28,8 @@ Thumbs.db
 
 # Personal strategy docs
 LINKEDIN_STRATEGY.md
+
+# Generated carousel content
+scripts/slides/
+scripts/*.pdf
+scripts/*.json

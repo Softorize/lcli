@@ -18,6 +18,8 @@ type CreatePostRequest struct {
 	Text       string `json:"text"`
 	Visibility string `json:"visibility"`
 	MediaURN   string `json:"mediaUrn,omitempty"`
+	MediaTitle string `json:"mediaTitle,omitempty"`
+	AuthorURN  string `json:"authorUrn,omitempty"`
 }
 
 // PostList is a paginated list of posts.

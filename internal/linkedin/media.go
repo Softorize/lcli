@@ -32,15 +32,16 @@ type initUploadOwner struct {
 // initUploadResponse is the raw response from the upload init endpoint.
 type initUploadResponse struct {
 	Value struct {
-		UploadURL       string `json:"uploadUrl"`
-		MediaURNOrImage string `json:"image,omitempty"`
-		MediaURNOrVideo string `json:"video,omitempty"`
-		UploadToken     string `json:"uploadToken,omitempty"`
+		UploadURL          string `json:"uploadUrl"`
+		MediaURNOrImage    string `json:"image,omitempty"`
+		MediaURNOrVideo    string `json:"video,omitempty"`
+		MediaURNOrDocument string `json:"document,omitempty"`
+		UploadToken        string `json:"uploadToken,omitempty"`
 	} `json:"value"`
 }
 
 // InitUpload initializes a media upload and returns the upload details.
-// mediaType must be "IMAGE" or "VIDEO".
+// mediaType must be "IMAGE", "VIDEO", or "DOCUMENT".
 func (s *MediaService) InitUpload(ctx context.Context, owner string, mediaType string) (*model.MediaUpload, error) {
 	var path string
 	switch mediaType {
@@ -48,6 +49,8 @@ func (s *MediaService) InitUpload(ctx context.Context, owner string, mediaType s
 		path = "/images?action=initializeUpload"
 	case "VIDEO":
 		path = "/videos?action=initializeUpload"
+	case "DOCUMENT":
+		path = "/documents?action=initializeUpload"
 	default:
 		return nil, fmt.Errorf("init upload: unsupported media type %q", mediaType)
 	}
@@ -73,6 +76,9 @@ func (s *MediaService) InitUpload(ctx context.Context, owner string, mediaType s
 	mediaURN := raw.Value.MediaURNOrImage
 	if mediaURN == "" {
 		mediaURN = raw.Value.MediaURNOrVideo
+	}
+	if mediaURN == "" {
+		mediaURN = raw.Value.MediaURNOrDocument
 	}
 
 	return &model.MediaUpload{
