@@ -53,7 +53,7 @@ func initServices(cfg *config.Config, deps *command.Deps) error {
 
 	cli := client.New(token.AccessToken, cfg.APIVersion)
 
-	deps.Profile = linkedin.NewProfileService(cli)
+	deps.Profile = linkedin.NewProfileService(cli, token.AccessToken)
 	deps.Posts = linkedin.NewPostService(cli)
 	deps.Comments = linkedin.NewCommentService(cli)
 	deps.Reactions = linkedin.NewReactionService(cli)

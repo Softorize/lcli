@@ -2,45 +2,84 @@ package linkedin
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/Softorize/lcli/internal/model"
 )
 
+const userinfoURL = "https://api.linkedin.com/v2/userinfo"
+
+// userinfoURLOverride allows tests to point at a local httptest server.
+var userinfoURLOverride string
+
+func getUserinfoURL() string {
+	if userinfoURLOverride != "" {
+		return userinfoURLOverride
+	}
+	return userinfoURL
+}
+
 // ProfileService provides access to LinkedIn profile endpoints.
 type ProfileService struct {
-	doer Doer
+	doer        Doer
+	accessToken string
 }
 
 // NewProfileService creates a ProfileService backed by the given Doer.
-func NewProfileService(d Doer) *ProfileService {
-	return &ProfileService{doer: d}
+// The accessToken is used for the OpenID Connect /userinfo endpoint.
+func NewProfileService(d Doer, accessToken string) *ProfileService {
+	return &ProfileService{doer: d, accessToken: accessToken}
 }
 
-// Me returns the authenticated user's profile.
-func (s *ProfileService) Me(ctx context.Context) (*model.Profile, error) {
-	path := "/me?projection=(id,localizedFirstName,localizedLastName,localizedHeadline,vanityName,profilePicture(displayImage~:playableStreams))"
+// userInfoResponse maps the OpenID Connect /userinfo endpoint response.
+type userInfoResponse struct {
+	Sub           string `json:"sub"`
+	Name          string `json:"name"`
+	GivenName     string `json:"given_name"`
+	FamilyName    string `json:"family_name"`
+	Picture       string `json:"picture"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
+}
 
-	resp, err := s.doer.Do(ctx, http.MethodGet, path, nil)
+// Me returns the authenticated user's profile via OpenID Connect /userinfo.
+func (s *ProfileService) Me(ctx context.Context) (*model.Profile, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, getUserinfoURL(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("get my profile: %w", err)
 	}
+	req.Header.Set("Authorization", "Bearer "+s.accessToken)
 
-	if err := checkError(resp); err != nil {
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
 		return nil, fmt.Errorf("get my profile: %w", err)
 	}
+	defer resp.Body.Close()
 
-	var raw model.ProfileResponse
-	if err := decodeJSON(resp, &raw); err != nil {
-		return nil, fmt.Errorf("get my profile: %w", err)
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("get my profile: read body: %w", err)
 	}
 
-	profile := raw.ToProfile()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("get my profile: linkedin api %d: %s", resp.StatusCode, data)
+	}
 
-	email, err := s.fetchEmail(ctx)
-	if err == nil {
-		profile.Email = email
+	var info userInfoResponse
+	if err := json.Unmarshal(data, &info); err != nil {
+		return nil, fmt.Errorf("get my profile: decode: %w", err)
+	}
+
+	profile := &model.Profile{
+		ID:             info.Sub,
+		FirstName:      info.GivenName,
+		LastName:       info.FamilyName,
+		Headline:       info.Name,
+		ProfilePicture: info.Picture,
+		Email:          info.Email,
 	}
 
 	return profile, nil
@@ -48,7 +87,7 @@ func (s *ProfileService) Me(ctx context.Context) (*model.Profile, error) {
 
 // GetByID returns a profile for the given person ID.
 func (s *ProfileService) GetByID(ctx context.Context, id string) (*model.Profile, error) {
-	path := fmt.Sprintf("/people/(id:%s)?projection=(id,localizedFirstName,localizedLastName,localizedHeadline,vanityName)", id)
+	path := fmt.Sprintf("/people/(id:%s)", id)
 
 	resp, err := s.doer.Do(ctx, http.MethodGet, path, nil)
 	if err != nil {
@@ -65,45 +104,4 @@ func (s *ProfileService) GetByID(ctx context.Context, id string) (*model.Profile
 	}
 
 	return raw.ToProfile(), nil
-}
-
-// emailResponse is the structure returned by the /emailAddress endpoint.
-type emailResponse struct {
-	Elements []emailElement `json:"elements"`
-}
-
-// emailElement holds a single email entry from the API.
-type emailElement struct {
-	Handle      emailHandle `json:"handle~"`
-	HandleTilde emailHandle `json:"handle"`
-}
-
-// emailHandle contains the actual email address string.
-type emailHandle struct {
-	EmailAddress string `json:"emailAddress"`
-}
-
-// fetchEmail retrieves the primary email for the authenticated user.
-func (s *ProfileService) fetchEmail(ctx context.Context) (string, error) {
-	path := "/emailAddress?q=members&projection=(elements*(handle~))"
-
-	resp, err := s.doer.Do(ctx, http.MethodGet, path, nil)
-	if err != nil {
-		return "", fmt.Errorf("fetch email: %w", err)
-	}
-
-	if err := checkError(resp); err != nil {
-		return "", fmt.Errorf("fetch email: %w", err)
-	}
-
-	var result emailResponse
-	if err := decodeJSON(resp, &result); err != nil {
-		return "", fmt.Errorf("fetch email: %w", err)
-	}
-
-	if len(result.Elements) == 0 {
-		return "", nil
-	}
-
-	return result.Elements[0].Handle.EmailAddress, nil
 }
