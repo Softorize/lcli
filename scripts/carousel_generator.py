@@ -418,11 +418,13 @@ def generate_slide(slide_data, brand, slide_num, total_slides):
 def images_to_pdf(images, output_path):
     """Combine slide images into a PDF for LinkedIn carousel upload."""
     c = pdf_canvas.Canvas(str(output_path))
+    tmp_paths = []
 
-    for img in images:
-        # Save temp image
-        tmp_path = Path(output_path).parent / "_tmp_slide.png"
+    for i, img in enumerate(images):
+        # Use unique filename per slide to avoid ReportLab image caching
+        tmp_path = Path(output_path).parent / f"_tmp_slide_{i}.png"
         img.save(str(tmp_path), "PNG")
+        tmp_paths.append(tmp_path)
 
         # Set page size to match image aspect ratio (scale to reasonable PDF size)
         pdf_w = 540  # points (7.5 inches)
@@ -431,9 +433,11 @@ def images_to_pdf(images, output_path):
         c.drawImage(str(tmp_path), 0, 0, width=pdf_w, height=pdf_h)
         c.showPage()
 
-        tmp_path.unlink(missing_ok=True)
-
     c.save()
+
+    # Clean up temp files after PDF is saved
+    for tmp_path in tmp_paths:
+        tmp_path.unlink(missing_ok=True)
 
 
 def main():
