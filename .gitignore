@@ -25,3 +25,6 @@ Thumbs.db
 
 # Config (contains tokens)
 .lcli/
+
+# Personal strategy docs
+LINKEDIN_STRATEGY.md
